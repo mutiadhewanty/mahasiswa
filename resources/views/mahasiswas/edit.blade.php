@@ -32,13 +32,12 @@
                     <input type="text" name="Nama" class="form-control" id="Nama" value="{{ $Mahasiswa->Nama }}" aria-describedby="Nama" >                
                 </div>
                 <div class="form-group">
-                <label for="Kelas">Kelas</label>
-                <option></option>
-                <select class="form-control">
-                    @foreach($kelas as $kls)
-                        <option value="{{ $kls->id }}" {{ $Mahasiswa->kelas_id == $kls->id ? 'selected' : ''}}> {{ $kls->nama_kelas }} </option>
-                    @endforeach
-                </select>                        
+                    <label for="Kelas">Kelas</label>
+                    <select class="form-control" name="Kelas" id="Kelas">
+                        @foreach ($kelas as $kls)
+                            <option value="{{ $kls->id }}" >{{ $kls->nama_kelas }}</option>
+                        @endforeach
+                    </select>
                 </div>
                 <div class="form-group">
                     <label for="Jurusan">Jurusan</label>                    

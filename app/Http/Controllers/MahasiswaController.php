@@ -55,25 +55,31 @@ class MahasiswaController extends Controller
             'Jurusan' => 'required',
             'No_Handphone' => 'required']);
         
-            $mahasiswas = new Mahasiswa;
-            $mahasiswas->nim = $request->get('Nim');
-            $mahasiswas->nama = $request->get('Nama');
-            $mahasiswas->jurusan = $request->get('Jurusan');
-            $mahasiswas->save();
+            $mahasiswa = new Mahasiswa;
+            $mahasiswa->nim = $request->get('Nim');
+            $mahasiswa->nama = $request->get('Nama');
+            if($request->file('image')){
+                $image_name = $request->file('foto')->store('images', 'public');
+            }
+            $mahasiswa->foto = $image_name;
+            $mahasiswa->jurusan = $request->get('Jurusan');
+            $mahasiswa->no_handphone = $request->get('No_Handphone');
+            $mahasiswa->save();
 
             $kelas = new Kelas;
             $kelas->id = $request->get('Kelas');
 
-        // fungsi eloquent untuk menambah data dengan relasi belongsTo
-            $mahasiswas->kelas()->associate($kelas);
-            $mahasiswas->save();
-        //fungsi eloquent untuk menambah data
-        // Mahasiswa::create($request->all());
+            // fungsi eloquent untuk menambah data dengan relasi belongsTo
+            $mahasiswa->kelas()->associate($kelas);
+            $mahasiswa->save();
 
-        //jika data berhasil ditambahkan, akan kembali ke halaman utama
-        return redirect()->route('mahasiswas.index')
-        ->with('success', 'Mahasiswa Berhasil Ditambahkan');
- 
+            //fungsi eloquent untuk menambah data
+            // Mahasiswa::create($request->all());
+
+            //jika data berhasil ditambahkan, akan kembali ke halaman utama
+            return redirect()->route('mahasiswas.index')
+                ->with('success', 'Mahasiswa Berhasil Ditambahkan');
+
     }
 
     /**
@@ -126,24 +132,36 @@ class MahasiswaController extends Controller
             'Tanggal_Lahir' => 'required'
         ]);
 
-        $mahasiswas = Mahasiswa::with('kelas')->where('nim', $Nim)->first();;
-            $mahasiswas->nim = $request->get('Nim');
-            $mahasiswas->nama = $request->get('Nama');
-            $mahasiswas->jurusan = $request->get('Jurusan');
-            $mahasiswas->save();
+        $mahasiswa = Mahasiswa::with('kelas')->where('nim',$Nim)->first();
+        // dd($mahasiswa);
+        $mahasiswa->nim = $request->get('Nim');
+        $mahasiswa->nama = $request->get('Nama');
+        if($mahasiswa->foto && file_exists(storage_path('app/public/'. $mahasiswa->foto))){
+            Storage::delete(['public/'. $mahasiswa->foto]);
+        }
 
-            $kelas = new Kelas;
-            $kelas->id = $request->get('Kelas');
+        $image_name = $request->file('foto')->store('images', 'public');
+        $mahasiswa->foto = $image_name;
+        $mahasiswa->jurusan = $request->get('Jurusan');
+        $mahasiswa->no_handphone = $request->get('No_Handphone');
+        $mahasiswa->save();
+
+        $kelas = new Kelas;
+        $kelas->id = $request->get('Kelas');
 
         // fungsi eloquent untuk menambah data dengan relasi belongsTo
-            $mahasiswas->kelas()->associate($kelas);
-            $mahasiswas->save();
+        $mahasiswa->kelas()->associate($kelas);
+        // dd($mahasiswa);
+        $mahasiswa->save();
+
+        // dd($mahasiswa);
+
         //fungsi eloquent untuk mengupdate data inputan kita
-        Mahasiswa::find($Nim)->update($request->all());
+        // Mahasiswa::find($Nim)->update($request->all());
 
         //jika data berhasil diupdate, akan kembali ke halaman utama
         return redirect()->route('mahasiswas.index')
-        ->with('success', 'Mahasiswa Berhasil Diupdate');
+            ->with('success', 'Mahasiswa Berhasil Diupdate');
     }
 
     /**
@@ -158,5 +176,23 @@ class MahasiswaController extends Controller
         Mahasiswa::find($Nim)->delete();
         return redirect()->route('mahasiswas.index')
         -> with('success', 'Mahasiswa Berhasil Dihapus');
+    }
+    public function nilai($Nim)
+    {
+        // $Mahasiswa = Mahasiswa::find($Nim);
+        $Mahasiswa = Mahasiswa::with('kelas')->where('nim',$Nim)->first();
+        $MahasiswaMatakuliah = MahasiswaMatakuliah::all()->where('mahasiswa_id', $Nim)->first();
+        return view('mahasiswas.khs',[
+            'Mahasiswa'=>$Mahasiswa,
+            'MahasiswaMatakuliah' => $MahasiswaMatakuliah
+        ]);
+    }
+
+    public function cetak_pdf($Nim){
+
+        $Mahasiswa = Mahasiswa::with('kelas')->where('nim',$Nim)->first();
+        // $pdf = PDF::loadview('articles.articles_pdf', ['articles' => $article]);
+        $pdf = PDF::loadview('mahasiswas.khs_pdf', array('Mahasiswa' => $Mahasiswa));
+        return $pdf->stream();
     }
 };
